@@ -30,12 +30,15 @@
 
 (rum/defc input < rum/reactive
   [placeholder cursor]
-  [:div
-   [:span placeholder]
-   [:input {:placeholder placeholder
-            :type "number"
-            :value (rum/react cursor)
-            :on-change (on-change-swap cursor)}]])
+  (let [uuid (random-uuid)]
+    [:div.form-group.col-auto
+     [:label.col-form-label {:for uuid} placeholder]
+     [:input.form-control.form-control-lg
+      {:id uuid
+       :placeholder placeholder
+       :type "number"
+       :value (rum/react cursor)
+       :on-change (on-change-swap cursor)}]]))
 
 (rum/defc bmi-calc < rum/reactive []
   [:div
@@ -57,13 +60,14 @@
          resting-hr (* 1 (rum/react resting-hr-cursor))]
      [:span (str (+ resting-hr (* intensity (- max-hr resting-hr))))])])
 
-  
 (rum/defc hello-world []
-  [:div
-   (input "Weight (lbs)" lbs-cursor)
-   (input "Height (feet)" height-cursor)
-   (input "Age (years)" age-cursor)
-   (input "Resting Heart Rate (bpm)" resting-hr-cursor)
+  [:div.container-fluid
+   [:form
+    [:div.form-row
+     (input "Weight (lbs)" lbs-cursor)
+     (input "Height (feet)" height-cursor)
+     (input "Age (years)" age-cursor)
+     (input "Resting Heart Rate (bpm)" resting-hr-cursor)]]
    (bmi-calc)
    (max-heart-rate-calc)
    (target-heart-rate-calc 1)
