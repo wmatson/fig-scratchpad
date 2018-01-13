@@ -1,2 +1,7 @@
 /* some style */
-
+input {
+    width: 40px;
+}
+span {
+    margin: 3px;
+}
