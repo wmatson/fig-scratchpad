@@ -1,5 +1,6 @@
 (ns fig-scratchpad.core
-    (:require [rum.core :as rum]))
+  (:require [reagent.core :as reagent :refer [atom]]
+            [re-com.core :as re-com]))
 
 (enable-console-print!)
 
@@ -24,10 +25,10 @@
 (defn target-hr [max-hr resting-hr intensity]
   (+ resting-hr (* intensity (- max-hr resting-hr))))
   
-(def lbs-cursor (rum/cursor app-state :lbs))
-(def height-cursor (rum/cursor app-state :feet))
-(def age-cursor (rum/cursor app-state :age))
-(def resting-hr-cursor (rum/cursor app-state :resting-hr))
+(def lbs-cursor (reagent/cursor app-state [:lbs]))
+(def height-cursor (reagent/cursor app-state [:feet]))
+(def age-cursor (reagent/cursor app-state [:age]))
+(def resting-hr-cursor (reagent/cursor app-state [:resting-hr]))
 
 (defn on-change-swap [cursor]
   (fn [e]
@@ -35,54 +36,52 @@
            (fn [_]
              (.. e -target -value)))))
 
-(rum/defc input < rum/reactive
+(defn input 
   [placeholder cursor]
   (let [uuid (random-uuid)]
     [:div.form-group.col-auto
      [:label.col-form-label {:for uuid} placeholder]
-     [:input.form-control.form-control-lg
-      {:id uuid
-       :placeholder placeholder
-       :type "number"
-       :value (rum/react cursor)
-       :on-change (on-change-swap cursor)}]]))
+     [re-com/input-text :class "input.form-control.form-control-lg"
+      :model (str @cursor)
+      :on-change #(reset! cursor %)
+      :placeholder placeholder]]))
 
-(rum/defc bmi-display < rum/reactive []
+(defn bmi-display []
   [:div
    "BMI: "
-   (let [height (feet->m (rum/react height-cursor))
-         weight (lbs->kg (rum/react lbs-cursor))
+   (let [height (feet->m @height-cursor)
+         weight (lbs->kg @lbs-cursor)
          bmi (bmi height weight)]
      [:span (str bmi)])])
 
-(rum/defc max-heart-rate-display < rum/reactive []
+(defn max-heart-rate-display []
   [:div
    "Max Heart Rate:"
-   [:span (str (- 220 (rum/react age-cursor)))]])
+   [:span (str (- 220 @age-cursor))]])
 
-(rum/defc target-heart-rate-display < rum/reactive [intensity]
+(defn target-heart-rate-display [intensity]
   [:div
    (str (* 100 intensity) "% Target Heart Rate:")
-   (let [max-hr (- 220 (rum/react age-cursor))
-         resting-hr (* 1 (rum/react resting-hr-cursor))]
+   (let [max-hr (- 220 @age-cursor)
+         resting-hr (* 1 @resting-hr-cursor)]
      [:span (str (target-hr max-hr resting-hr intensity))])])
 
-(rum/defc hello-world []
+(defn hello-world []
   [:div.container-fluid
    [:form
     [:div.form-row
-     (input "Weight (lbs)" lbs-cursor)
-     (input "Height (feet)" height-cursor)
-     (input "Age (years)" age-cursor)
-     (input "Resting Heart Rate (bpm)" resting-hr-cursor)]]
-   (bmi-display)
-   (max-heart-rate-display)
-   (target-heart-rate-display 1)
-   (target-heart-rate-display 0.70)
-   (target-heart-rate-display 0.40)])
+     [input "Weight (lbs)" lbs-cursor]
+     [input "Height (feet)" height-cursor]
+     [input "Age (years)" age-cursor]
+     [input "Resting Heart Rate (bpm)" resting-hr-cursor]]]
+   [bmi-display]
+   [max-heart-rate-display]
+   [target-heart-rate-display 1]
+   [target-heart-rate-display 0.70]
+   [target-heart-rate-display 0.40]])
 
-(rum/mount (hello-world)
-           (. js/document (getElementById "app")))
+(reagent/render-component (hello-world)
+                          (. js/document (getElementById "app")))
 
 (defn on-js-reload [])
   ;; optionally touch your app-state to force rerendering depending on
