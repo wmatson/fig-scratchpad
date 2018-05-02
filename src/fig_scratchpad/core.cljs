@@ -10,7 +10,8 @@
                           :lbs 170
                           :feet 5.5
                           :age 24
-                          :resting-hr 70.0}))
+                          :resting-hr 70.0
+                          :target-percent 0.7}))
 
 (defn lbs->kg [lbs]
   (* 0.453592 lbs))
@@ -24,27 +25,29 @@
 
 (defn target-hr [max-hr resting-hr intensity]
   (+ resting-hr (* intensity (- max-hr resting-hr))))
+
   
 (def lbs-cursor (reagent/cursor app-state [:lbs]))
 (def height-cursor (reagent/cursor app-state [:feet]))
 (def age-cursor (reagent/cursor app-state [:age]))
 (def resting-hr-cursor (reagent/cursor app-state [:resting-hr]))
+(def target-percent-cursor (reagent/cursor app-state [:target-percent]))
 
-(defn on-change-swap [cursor]
-  (fn [e]
-    (swap! cursor
-           (fn [_]
-             (.. e -target -value)))))
+(defn re-calc-feet! [ft inches]
+  (reset! height-cursor (+ ft (/ inches 12))))
 
-(defn input 
-  [placeholder cursor]
+(defn with-label [label body]
   (let [uuid (random-uuid)]
-    [:div.form-group.col-auto
-     [:label.col-form-label {:for uuid} placeholder]
-     [re-com/input-text :class "input.form-control.form-control-lg"
-      :model (str @cursor)
-      :on-change #(reset! cursor %)
-      :placeholder placeholder]]))
+    [re-com/v-box
+     :children [[:label {:for uuid} label]
+                (vec (concat body [:attr {:id uuid}]))]]))
+
+(defn input [placeholder cursor]
+  (with-label placeholder
+    [re-com/input-text :attr {:id uuid}
+     :model (str @cursor)
+     :on-change #(reset! cursor %)
+     :placeholder placeholder]))
 
 (defn bmi-display []
   [:div
@@ -61,10 +64,10 @@
 
 (defn target-heart-rate-display [intensity]
   [:div
-   (str (* 100 intensity) "% Target Heart Rate:")
+   (str (int (* 100 @intensity)) "% Target Heart Rate:")
    (let [max-hr (- 220 @age-cursor)
          resting-hr (* 1 @resting-hr-cursor)]
-     [:span (str (target-hr max-hr resting-hr intensity))])])
+     [:span (str (int (target-hr max-hr resting-hr @intensity)))])])
 
 (defn hello-world []
   [:div.container-fluid
@@ -76,9 +79,9 @@
      [input "Resting Heart Rate (bpm)" resting-hr-cursor]]]
    [bmi-display]
    [max-heart-rate-display]
-   [target-heart-rate-display 1]
-   [target-heart-rate-display 0.70]
-   [target-heart-rate-display 0.40]])
+   [re-com/slider :min 0.3 :max 1.0 :step 0.01
+    :model target-percent-cursor :on-change #(reset! target-percent-cursor %)]
+   [target-heart-rate-display target-percent-cursor]])
 
 (reagent/render-component (hello-world)
                           (. js/document (getElementById "app")))
