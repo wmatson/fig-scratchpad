@@ -1,6 +1,6 @@
 # fig-scratchpad
 
-FIXME: Write a one-line description of your library/project.
+A scratchpad for ClojureScript/figwheel development, and github-pages deployment [here](https://wmatson.github.io/fig-scratchpad/)
 
 ## Overview
 
